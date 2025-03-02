@@ -1,0 +1,48 @@
+## 调用对话 API​
+
+​
+在创建 API key 之后，你可以使用以下样例脚本的来访问 DeepSeek API。样例为非流式输出，您可以将 stream 设置为 true 来使用流式输出。
+- curl
+- python
+- nodejs
+
+```
+curl https://api.deepseek.com/chat/completions \  -H "Content-Type: application/json" \  -H "Authorization: Bearer <DeepSeek API Key>" \  -d '{        "model": "deepseek-chat",        "messages": [          {"role": "system", "content": "You are a helpful assistant."},          {"role": "user", "content": "Hello!"}        ],        "stream": false      }'
+```
+
+
+```
+curl https://api.deepseek.com/chat/completions \  -H "Content-Type: application/json" \  -H "Authorization: Bearer <DeepSeek API Key>" \  -d '{        "model": "deepseek-chat",        "messages": [          {"role": "system", "content": "You are a helpful assistant."},          {"role": "user", "content": "Hello!"}        ],        "stream": false      }'
+```
+
+
+```
+# Please install OpenAI SDK first: `pip3 install openai`from openai import OpenAIclient = OpenAI(api_key="<DeepSeek API Key>", base_url="https://api.deepseek.com")response = client.chat.completions.create(    model="deepseek-chat",    messages=[        {"role": "system", "content": "You are a helpful assistant"},        {"role": "user", "content": "Hello"},    ],    stream=False)print(response.choices[0].message.content)
+```
+
+
+```
+# Please install OpenAI SDK first: `pip3 install openai`from openai import OpenAIclient = OpenAI(api_key="<DeepSeek API Key>", base_url="https://api.deepseek.com")response = client.chat.completions.create(    model="deepseek-chat",    messages=[        {"role": "system", "content": "You are a helpful assistant"},        {"role": "user", "content": "Hello"},    ],    stream=False)print(response.choices[0].message.content)
+```
+
+
+```
+// Please install OpenAI SDK first: `npm install openai`import OpenAI from "openai";const openai = new OpenAI({        baseURL: 'https://api.deepseek.com',        apiKey: '<DeepSeek API Key>'});async function main() {  const completion = await openai.chat.completions.create({    messages: [{ role: "system", content: "You are a helpful assistant." }],    model: "deepseek-chat",  });  console.log(completion.choices[0].message.content);}main();
+```
+
+
+```
+// Please install OpenAI SDK first: `npm install openai`import OpenAI from "openai";const openai = new OpenAI({        baseURL: 'https://api.deepseek.com',        apiKey: '<DeepSeek API Key>'});async function main() {  const completion = await openai.chat.completions.create({    messages: [{ role: "system", content: "You are a helpful assistant." }],    model: "deepseek-chat",  });  console.log(completion.choices[0].message.content);}main();
+```
+
+[下一页模型 & 价格](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)
+- 调用对话 API
+调用对话 API
+- [邮箱](mailto:api-service@deepseek.com)
+- [Discord](https://discord.gg/Tc7c45Zzu5)
+- [Twitter](https://twitter.com/deepseek_ai)
+[邮箱](mailto:api-service@deepseek.com)
+[Discord](https://discord.gg/Tc7c45Zzu5)
+[Twitter](https://twitter.com/deepseek_ai)
+- [GitHub](https://github.com/deepseek-ai)
+[GitHub](https://github.com/deepseek-ai)
