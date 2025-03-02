@@ -17,6 +17,8 @@ env/
 # 缓存文件
 .cache/
 .pytest_cache/
+*.sqlite
+*.sqlite.lock
 
 # 系统文件
 .DS_Store
