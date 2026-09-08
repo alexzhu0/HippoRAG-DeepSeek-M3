@@ -147,7 +147,8 @@ def test_failed_backend_construction_restores_key_and_closes_embedding(monkeypat
     assert closed == [True]
 
 
-def test_real_hipporag_persists_and_reopens_index(monkeypatch, tiny_model, tmp_path):
+@pytest.mark.parametrize("provider", ["deepseek", "orcarouter"])
+def test_real_hipporag_persists_and_reopens_index(monkeypatch, tiny_model, tmp_path, provider):
     import json
 
     from openai.resources.chat.completions import Completions
@@ -159,7 +160,9 @@ def test_real_hipporag_persists_and_reopens_index(monkeypatch, tiny_model, tmp_p
 
     def completion(self, **kwargs):
         calls.append(kwargs)
-        assert kwargs["model"] == "deepseek-v4-flash"
+        assert kwargs["model"] == (
+            "deepseek/deepseek-v4-flash-free" if provider == "orcarouter" else "deepseek-v4-flash"
+        )
         assert kwargs.get("extra_body") == {"thinking": {"type": "disabled"}}
         message = kwargs["messages"][-1]["content"]
         if "fact_before_filter" in message:
@@ -190,10 +193,20 @@ def test_real_hipporag_persists_and_reopens_index(monkeypatch, tiny_model, tmp_p
     monkeypatch.setattr(Completions, "create", completion)
     monkeypatch.setenv("DEEPSEEK_API_KEY", "test-deepseek")
     monkeypatch.setenv("OPENAI_API_KEY", "other-provider")
-    options = dict(save_dir=tmp_path / "index", embedding_model=str(tiny_model), device="cpu", batch_size=2)
+    monkeypatch.setenv("ORCAROUTER_API_KEY", "test-orca")
+    options = dict(
+        save_dir=tmp_path / "index",
+        embedding_model=str(tiny_model),
+        device="cpu",
+        batch_size=2,
+        provider=provider,
+        llm_model="deepseek/deepseek-v4-flash-free" if provider == "orcarouter" else "deepseek-v4-flash",
+    )
     rag, embedding = backend_module().create_backend(**options)
     try:
-        assert rag.llm_model.openai_client.api_key == "test-deepseek"
+        assert rag.llm_model.openai_client.api_key == (
+            "test-orca" if provider == "orcarouter" else "test-deepseek"
+        )
         assert os.environ["OPENAI_API_KEY"] == "other-provider"
         rag.index(docs=["hello world", "world hello"])
         assert len(rag.chunk_embedding_store.get_all_ids()) == 2
@@ -214,3 +227,8 @@ def test_real_hipporag_persists_and_reopens_index(monkeypatch, tiny_model, tmp_p
     finally:
         reopened.close()
         embedding.close()
+
+    from hipporag.utils.state_utils import StateConsistencyError
+
+    with pytest.raises(StateConsistencyError, match="OpenIE producer changed.*fresh save_dir"):
+        backend_module().create_backend(**options, llm_base_url="https://different.example/v1")

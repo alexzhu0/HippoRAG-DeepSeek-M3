@@ -67,30 +67,36 @@ def parse_result(results):
 class HippoRAGDemo:
     """Shared implementation, retaining the original advanced app's public methods."""
 
-    def __init__(self, save_dir=DEFAULT_OUTPUT, *, device="auto", batch_size=8):
-        self.save_dir = str(save_dir)
+    def __init__(self, save_dir=None, *, provider=None, device="auto", batch_size=8):
+        import os
+
+        self.provider = provider if provider is not None else os.getenv("LLM_PROVIDER", "deepseek")
+        self.save_dir = str(
+            save_dir
+            if save_dir is not None
+            else (DEFAULT_OUTPUT / "orcarouter" if self.provider == "orcarouter" else DEFAULT_OUTPUT)
+        )
         self.device = device
         self.batch_size = batch_size
         self.hipporag = None
         self.docs = []
         self.history = []
         self.last_error = None
-        self._embedding = None
+        self._resources = None
 
     def _failed(self, operation, error):
         self.last_error = str(error)
         logger.error("%s: %s", operation, error)
         return False
 
-    def initialize(
-        self, llm_model="deepseek-v4-flash", embedding_model="facebook/contriever", llm_base_url=None
-    ):
+    def initialize(self, llm_model=None, embedding_model="facebook/contriever", llm_base_url=None):
         try:
             from backend import create_backend
 
             self.close()
-            self.hipporag, self._embedding = create_backend(
+            self.hipporag, self._resources = create_backend(
                 save_dir=self.save_dir,
+                provider=self.provider,
                 llm_model=llm_model,
                 embedding_model=embedding_model,
                 llm_base_url=llm_base_url,
@@ -176,6 +182,6 @@ class HippoRAGDemo:
                 self.hipporag.close()
         finally:
             self.hipporag = None
-            if self._embedding is not None:
-                self._embedding.close()
-                self._embedding = None
+            if self._resources is not None:
+                self._resources.close()
+                self._resources = None

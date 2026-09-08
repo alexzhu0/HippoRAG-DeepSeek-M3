@@ -5,7 +5,8 @@ import logging
 import multiprocessing
 import os
 
-from demo_core import DEFAULT_DOCUMENTS, DEFAULT_OUTPUT, ROOT
+from backend import resolve_provider
+from demo_core import DEFAULT_DOCUMENTS, ROOT
 
 
 def positive_int(value):
@@ -21,8 +22,9 @@ def run_cli(demo_class, *, advanced=False, argv=None):
     load_dotenv(ROOT / ".env", override=False)
     parser = argparse.ArgumentParser(description="HippoRAG + DeepSeek 本地文档问答")
     parser.add_argument("--documents", default=str(DEFAULT_DOCUMENTS), help="文档 JSON 路径")
-    parser.add_argument("--save-dir", default=os.getenv("HIPPORAG_SAVE_DIR", str(DEFAULT_OUTPUT)))
-    parser.add_argument("--model", default=os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"))
+    parser.add_argument("--save-dir", default=os.getenv("HIPPORAG_SAVE_DIR"))
+    parser.add_argument("--provider", choices=["deepseek", "orcarouter"])
+    parser.add_argument("--model", help="所选 Provider 的模型 ID；OrcaRouter 必须指定 vendor/model")
     parser.add_argument("--embedding-model", default=os.getenv("EMBEDDING_MODEL", "facebook/contriever"))
     parser.add_argument(
         "--device", choices=["auto", "cpu", "mps", "cuda"], default=os.getenv("EMBEDDING_DEVICE", "auto")
@@ -33,20 +35,26 @@ def run_cli(demo_class, *, advanced=False, argv=None):
     args = parser.parse_args(argv)
     if args.query is not None and not args.query.strip():
         parser.error("--query 不能为空")
+    try:
+        settings = resolve_provider(args.provider, args.model)
+    except ValueError as error:
+        parser.error(str(error))
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     if multiprocessing.get_start_method(allow_none=True) is None:
         multiprocessing.set_start_method("spawn")
-    demo = demo_class(save_dir=args.save_dir, device=args.device, batch_size=args.batch_size)
+    demo = demo_class(
+        save_dir=args.save_dir, provider=settings.provider, device=args.device, batch_size=args.batch_size
+    )
     try:
         if not demo.load_documents(args.documents):
             return 1
-        if not demo.initialize(llm_model=args.model, embedding_model=args.embedding_model):
+        if not demo.initialize(llm_model=settings.model, embedding_model=args.embedding_model):
             return 1
         if not demo.index_documents():
             return 1
         if args.query is not None:
             return 0 if show_answer(demo, args.query, advanced) else 1
-        print("\n=== HippoRAG + DeepSeek ===")
+        print(f"\n=== HippoRAG + {settings.provider} ===")
         print("输入问题，exit 退出" + ("；history 查看历史，export 导出 CSV" if advanced else ""))
         while True:
             try:

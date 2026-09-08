@@ -68,3 +68,23 @@ sys.exit(result)
         [sys.executable, "-c", code], cwd=tmp_path, env=env, capture_output=True, text=True
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_orca_diagnostics_only_require_selected_key(tmp_path):
+    env = {
+        **os.environ,
+        "LLM_PROVIDER": "orcarouter",
+        "ORCAROUTER_API_KEY": "test-orca",
+        "ORCAROUTER_MODEL": "qwen/test",
+        "DEEPSEEK_API_KEY": "",
+    }
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "test_env.py"), "--provider", "orcarouter"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "orcarouter / qwen/test" in result.stdout
+    assert "test-orca" not in result.stdout

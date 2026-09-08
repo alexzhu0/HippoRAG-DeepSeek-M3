@@ -14,6 +14,8 @@ from demo_core import DEFAULT_DOCUMENTS, ROOT, load_documents
 def main(argv=None):
     parser = argparse.ArgumentParser(description="检查依赖、文档与配置，不调用 API")
     parser.add_argument("--offline", action="store_true", help="不要求配置 API 密钥，适合安装检查和 CI")
+    parser.add_argument("--provider", choices=["deepseek", "orcarouter"])
+    parser.add_argument("--model", help="所选 Provider 的模型 ID")
     args = parser.parse_args(argv)
     # LiteLLM otherwise fetches its price map while HippoRAG is imported.
     os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
@@ -43,11 +45,12 @@ def main(argv=None):
         try:
             from dotenv import load_dotenv
 
-            from backend import validate_key
+            from backend import resolve_provider, validate_key
 
             load_dotenv(ROOT / ".env", override=False)
-            validate_key()
-            print("✓ DEEPSEEK_API_KEY 已配置（未验证 API 有效性）")
+            settings = resolve_provider(args.provider, args.model)
+            validate_key(settings.provider)
+            print(f"✓ {settings.provider} / {settings.model} 密钥已配置（未验证 API 有效性）")
         except Exception as error:
             errors.append(str(error))
     for error in errors:
@@ -55,7 +58,7 @@ def main(argv=None):
     if errors:
         print("检查未通过；请参考 README 或重新运行 setup_env.sh")
         return 1
-    print("离线检查通过；未下载嵌入模型，也未调用 DeepSeek API。")
+    print("离线检查通过；未下载嵌入模型，也未调用 LLM API。")
     return 0
 
 

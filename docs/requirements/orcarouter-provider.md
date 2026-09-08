@@ -1,8 +1,8 @@
 # OrcaRouter 可选 Provider 接入需求
 
-状态：待实施。记录日期：2026-09-08。
+状态：技术接入已实现，离线验证完成；真实 API 验证待提供测试密钥。记录日期：2026-09-08。
 
-本文记录下一轮需求，不代表项目已经支持 OrcaRouter、加入合作计划或获得合作收益。当前应用仍默认通过 DeepSeek 直连。
+本文记录接入范围及验收状态。应用默认通过 DeepSeek 直连；OrcaRouter 由用户显式选择。技术接入不代表加入合作计划或获得合作收益。
 
 ## 目标与范围
 
@@ -14,7 +14,7 @@
 
 - OrcaRouter 的 OpenAI 兼容基础地址为 `https://api.orcarouter.ai/v1`，模型采用 `vendor/model` 标识。[SDK 文档](https://docs.orcarouter.ai/compatibility/openai-sdk)
 - 项目固定的 HippoRAG 提交已经包含 `OrcaRouterLLM`，使用 `ORCAROUTER_API_KEY`，并通过 `orcarouter/<vendor/model>` 选择后端；发送请求时去掉最外层前缀。实施时优先复用并测试该适配器。[固定版本源码](https://github.com/OSU-NLP-Group/HippoRAG/blob/1438aba3fc44ff10573e5a5e1e7cc3c7f9794aff/src/hipporag/llm/orcarouter_llm.py)
-- 当前应用在 `backend.py` 中强制校验 DeepSeek 密钥、设置 DeepSeek 参数，因此不能仅凭上游已有适配器就宣称本项目已完成接入。
+- 应用现已按 Provider 选择独立配置和凭据，复用固定版本上游适配器，并添加有界重试、响应校验和安全错误提示。
 - 官方文档列有 `-free` 模型，但目录和可用容量可能变化，并有频率、每日额度和请求大小限制；免费请求的 429 不一定能靠重试解决。[免费模型文档](https://docs.orcarouter.ai/routing/free-models)
 
 ## 功能需求
@@ -22,11 +22,11 @@
 ### 1. 显式选择 Provider
 
 - 基础版、高级版和单次问答入口统一支持 `--provider deepseek|orcarouter`。
-- 拟增加 `LLM_PROVIDER` 环境变量，默认 `deepseek`，保持现有用户的运行方式。
+- 使用 `LLM_PROVIDER` 环境变量，默认 `deepseek`，保持现有用户的运行方式。
 - 配置优先级为命令行、shell 环境变量、项目 `.env`、内置默认值。
 - 启动时显示实际 Provider 和模型；不输出密钥。
 
-拟议配置（尚未实现，不应直接当作当前使用说明）：
+配置（完整使用步骤见 README）：
 
 | 配置 | 用途 |
 | --- | --- |
@@ -74,14 +74,14 @@
 
 ## 验收标准
 
-- [ ] 原有 DeepSeek 默认流程和测试全部通过。
-- [ ] 两种入口及 `--query` 均遵守 Provider、模型与配置优先级。
-- [ ] 只有所选 Provider 密钥时能初始化；缺失密钥在下载模型、建立索引或请求 API 前报错。
-- [ ] API 边界测试验证 URL、密钥、模型前缀、思考参数和 token 参数正确，不发生跨 Provider 泄漏。
-- [ ] 两个 Provider 的离线集成测试覆盖索引、问答、缓存复用、索引身份不匹配及初始化失败后的释放。
-- [ ] 验证 401/403、429、模型不可用、缺少 usage、空答案等失败路径；无隐式付费回退。
-- [ ] 免费模型额度或长度错误不会触发无效的无限重试。
-- [ ] CPU CI 及可用实体 Mac 上的 MPS 测试通过。
+- [x] 原有 DeepSeek 默认流程和测试全部通过。
+- [x] 两种入口及 `--query` 均遵守 Provider、模型与配置优先级。
+- [x] 只有所选 Provider 密钥时能初始化；缺失密钥在下载模型、建立索引或请求 API 前报错。
+- [x] API 边界测试验证 URL、密钥、模型前缀、思考参数和 token 参数正确，不发生跨 Provider 泄漏。
+- [x] 两个 Provider 的离线集成测试覆盖索引、问答、缓存复用、索引身份不匹配及初始化失败后的释放。
+- [x] 验证 401/403、429、模型不可用、缺少 usage、空答案等失败路径；无隐式付费回退。
+- [x] 免费模型额度或长度错误不会触发无效的无限重试。
+- [x] 本地 CPU 及实体 Mac MPS 测试通过；GitHub CI 在推送后检查。
 - [ ] 使用 maintainer 提供的 OrcaRouter 测试密钥完成最小在线索引和问答，再将功能状态改为“可用”。
 
 ## 合作事项待确认

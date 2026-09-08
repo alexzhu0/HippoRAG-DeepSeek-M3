@@ -125,7 +125,7 @@ bash -n setup_env.sh
 
 ## 后续需求
 
-- [OrcaRouter 可选 Provider 接入](docs/requirements/orcarouter-provider.md)：待实施，包含配置隔离、免费模型限制、合作归因待确认项及验收标准。
+- [OrcaRouter 可选 Provider 接入](docs/requirements/orcarouter-provider.md)：已实现可选接入并通过离线验证，真实 API 验证与合作归因待完成。
 
 ## 参考
 
@@ -134,3 +134,41 @@ bash -n setup_env.sh
 - [PyTorch MPS 文档](https://pytorch.org/docs/stable/notes/mps.html)
 
 本项目沿用原 README 声明的 MIT 许可。上游代码和模型遵循各自许可证。
+
+## OrcaRouter 可选网关
+
+已实现接入并提供离线测试；真实 OrcaRouter API 索引和问答尚待测试密钥验证。DeepSeek 直连仍为默认选项。
+
+在项目 `.env` 中设置：
+
+```dotenv
+LLM_PROVIDER=orcarouter
+ORCAROUTER_API_KEY=your_orcarouter_api_key
+ORCAROUTER_API_URL=https://api.orcarouter.ai/v1
+ORCAROUTER_MODEL=deepseek/deepseek-v4-flash-free
+```
+
+模型示例来自[官方免费模型文档](https://docs.orcarouter.ai/routing/free-models)，实际可用型号以网关 `/v1/models` 目录为准。免费额度、输入长度和可用容量会变化。模型必须显式指定，不会自动选择付费模型、切换 Provider 或启用自动路由。输入 `vendor/model`，不要添加 HippoRAG 内部使用的 `orcarouter/` 前缀。
+
+```bash
+# 只检查本地依赖，不要求密钥、不调用 API
+python test_env.py --offline
+# 检查所选 Provider 的配置；仍不调用 API
+python test_env.py --provider orcarouter
+# 最小在线验证：先在 .env 中填写自己的密钥和确定要使用的模型
+python app.py --provider orcarouter --device cpu --query "HippoRAG是什么？"
+# 高级版同样支持切换；--model 覆盖所选 Provider 的环境配置
+python advanced_app.py --provider orcarouter --model deepseek/deepseek-v4-flash-free
+# 返回直连
+python app.py --provider deepseek --query "HippoRAG是什么？"
+```
+
+首次在线运行会加载本地嵌入模型，并为示例文档调用抽取、重排和问答 API。按所选模型的规则计费；成功应返回非空答案和参考资料。重启且文档不变时复用抽取索引，问答缓存也可复用。测试其他模型时建议先使用少量短文档。选择网关后，相关文档、问题及检索上下文会发送至 OrcaRouter 和实际模型服务方。
+
+配置优先级为命令行、shell 环境变量、项目 `.env`、默认值。每个 Provider 只读取自己的密钥、模型与 API 地址；选择网关无需配置 DeepSeek 密钥。仅 DeepSeek V4 家族附带关闭思考模式的请求参数，其他网关模型不附带该字段。
+
+OrcaRouter 默认索引位于 `outputs/v2/orcarouter`，DeepSeek 沿用 `outputs/v2`。`--save-dir` 或 `HIPPORAG_SAVE_DIR` 可覆盖根目录；上游在其下按模型和嵌入模型划分子目录。相同子目录更换端点或索引身份时会拒绝加载，请使用新的 `--save-dir` 重建。LLM 缓存同时区分适配器、端点、模型和生成参数。
+
+认证失败请检查 `ORCAROUTER_API_KEY`；模型不存在请核对模型 ID 和基础地址。403 需检查权限或额度。429 带 `Retry-After` 且等待不超过 30 秒时最多重试一次；等待更长时退出并提示稍后重试，无该字段时应缩短输入并检查额度。连接失败及 500/502/503/504 最多尝试三次，单次请求超时为 300 秒。失败不会触发付费回退。无有效文本或缺少 usage 的响应不会作为成功答案缓存。
+
+技术接入不代表项目已加入 OSS 分成计划，目前未设置合作归因标识。合作申请、条款及收益账户由 maintainer 单独处理。[接入需求与验收状态](docs/requirements/orcarouter-provider.md)
