@@ -46,3 +46,25 @@ def test_imports_need_no_dependencies_or_credentials(tmp_path):
     code = f"import sys; sys.path.insert(0, {str(ROOT)!r}); import app, advanced_app; assert 'torch' not in sys.modules"
     result = subprocess.run([sys.executable, "-S", "-c", code], cwd=tmp_path, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+def test_diagnostics_do_not_fetch_provider_metadata(tmp_path):
+    env = {**os.environ, "LITELLM_LOCAL_MODEL_COST_MAP": ""}
+    code = f"""
+import sys
+sys.path.insert(0, {str(ROOT)!r})
+import httpx
+calls = []
+def blocked(*args, **kwargs):
+    calls.append(args)
+    raise RuntimeError('network disabled for test')
+httpx.get = blocked
+from test_env import main
+result = main(['--offline'])
+assert not calls, 'diagnostics attempted to fetch provider metadata'
+sys.exit(result)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code], cwd=tmp_path, env=env, capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

@@ -3,6 +3,7 @@
 
 import argparse
 import importlib
+import os
 import platform
 import sys
 from importlib.metadata import version
@@ -14,6 +15,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description="检查依赖、文档与配置，不调用 API")
     parser.add_argument("--offline", action="store_true", help="不要求配置 API 密钥，适合安装检查和 CI")
     args = parser.parse_args(argv)
+    # LiteLLM otherwise fetches its price map while HippoRAG is imported.
+    os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"
     errors = []
     print(f"Python {platform.python_version()} / {platform.platform()}")
     if not (3, 10) <= sys.version_info < (3, 13):
