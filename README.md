@@ -125,7 +125,7 @@ bash -n setup_env.sh
 
 ## 后续需求
 
-- [OrcaRouter 可选 Provider 接入](docs/requirements/orcarouter-provider.md)：已实现可选接入并通过离线验证，真实 API 验证与合作归因待完成。
+- [OrcaRouter 可选 Provider 接入](docs/requirements/orcarouter-provider.md)：已完成可选接入、离线验证及一次真实 API 冒烟测试，合作归因待确认。
 
 ## 参考
 
@@ -137,7 +137,7 @@ bash -n setup_env.sh
 
 ## OrcaRouter 可选网关
 
-已实现接入并提供离线测试；真实 OrcaRouter API 索引和问答尚待测试密钥验证。DeepSeek 直连仍为默认选项。
+已实现接入并通过离线及真实 API 冒烟测试。DeepSeek 直连仍为默认选项。
 
 在项目 `.env` 中设置：
 
@@ -172,3 +172,9 @@ OrcaRouter 默认索引位于 `outputs/v2/orcarouter`，DeepSeek 沿用 `outputs
 认证失败请检查 `ORCAROUTER_API_KEY`；模型不存在请核对模型 ID 和基础地址。403 需检查权限或额度。429 带 `Retry-After` 且等待不超过 30 秒时最多重试一次；等待更长时退出并提示稍后重试，无该字段时应缩短输入并检查额度。连接失败及 500/502/503/504 最多尝试三次，单次请求超时为 300 秒。失败不会触发付费回退。无有效文本或缺少 usage 的响应不会作为成功答案缓存。
 
 技术接入不代表项目已加入 OSS 分成计划，目前未设置合作归因标识。合作申请、条款及收益账户由 maintainer 单独处理。[接入需求与验收状态](docs/requirements/orcarouter-provider.md)
+
+### 真实 API 验证记录
+
+2026-09-08 使用 `z-ai/glm-5.3-flash-free`、官方 OrcaRouter 端点和本地 CPU Contriever 完成小规模冒烟测试：最小请求返回有效文本和 usage；两篇短英文文档完成实体抽取、三元组抽取、重排和问答，得到 9 个实体、8 条事实。问题“Which optional language model provider does HippoRAG-DeepSeek-M3 support?” 正确回答“OrcaRouter”，附两篇参考资料。重启相同配置后答案一致，复用已有索引和 LLM 缓存，日志中没有新增 HTTP 请求。
+
+本次仅验证该模型当日的小样本文本流程，不代表其他模型、长文档、中文检索质量或免费额度已获验证。凭据、原始日志和测试索引仅保存在本地，不提交到仓库。
