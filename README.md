@@ -13,6 +13,8 @@
 - 完整安装依赖，新增离线测试、环境诊断和 Linux/macOS CI。
 - 高级版可用 `history` 查看本次会话记录、`export` 导出含参考资料的 CSV。
 
+默认模型已迁移到 `deepseek-v4-flash`。DeepSeek 官方已宣布旧别名 `deepseek-chat` / `deepseek-reasoner` 于 2026-07-24 停用，参见[更新记录](https://api-docs.deepseek.com/updates/)。现有 `.env` 不会被安装脚本覆盖，请同步修改 `DEEPSEEK_MODEL`。本演示按[官方参数](https://api-docs.deepseek.com/guides/thinking_mode/)显式关闭思考模式，以保持普通问答行为并将输出预算用于知识抽取和答案；可用 `--model deepseek-v4-pro` 切换 Pro。
+
 ## 环境要求与版本选择
 
 建议使用 **Python 3.11**；测试配置覆盖 Python 3.10–3.12。Apple Silicon 建议使用 macOS 14 或更新版本；CPU 模式也可用于 Linux。需要 Git、可访问 GitHub/PyPI/Hugging Face 的网络，以及 DeepSeek API 密钥。
@@ -42,7 +44,7 @@ cp .env.template .env  # 仅在尚未创建 .env 时执行
 ```dotenv
 DEEPSEEK_API_KEY=你的DeepSeek密钥
 DEEPSEEK_API_URL=https://api.deepseek.com/v1
-DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_MODEL=deepseek-v4-flash
 EMBEDDING_DEVICE=auto
 EMBEDDING_BATCH_SIZE=8
 EMBEDDING_MODEL=facebook/contriever

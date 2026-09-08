@@ -57,7 +57,7 @@ def create_embedding(config, device):
 def create_backend(
     *,
     save_dir,
-    llm_model="deepseek-chat",
+    llm_model="deepseek-v4-flash",
     embedding_model="facebook/contriever",
     llm_base_url=None,
     device="auto",
@@ -94,10 +94,14 @@ def create_backend(
             rag = HippoRAG(
                 global_config=config,
                 embedding_model=embedding,
-                index_identity="deepseek-m3-contriever-mean-pooling-v1",
+                index_identity="deepseek-m3-contriever-nonthinking-v2",
             )
     except BaseException:
         embedding.close()
         raise
+    # DeepSeek V4 defaults to thinking mode; extraction uses a small output budget.
+    # Generation defaults are included in upstream cache keys and used by both
+    # OpenIE and QA, which share this client.
+    rag.llm_model.llm_config.generate_params["extra_body"] = {"thinking": {"type": "disabled"}}
     logger.info("嵌入设备：%s；批大小：%d；索引目录：%s", selected, batch_size, save_dir)
     return rag, embedding

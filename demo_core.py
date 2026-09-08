@@ -82,7 +82,9 @@ class HippoRAGDemo:
         logger.error("%s: %s", operation, error)
         return False
 
-    def initialize(self, llm_model="deepseek-chat", embedding_model="facebook/contriever", llm_base_url=None):
+    def initialize(
+        self, llm_model="deepseek-v4-flash", embedding_model="facebook/contriever", llm_base_url=None
+    ):
         try:
             from backend import create_backend
 

@@ -22,7 +22,7 @@ def run_cli(demo_class, *, advanced=False, argv=None):
     parser = argparse.ArgumentParser(description="HippoRAG + DeepSeek 本地文档问答")
     parser.add_argument("--documents", default=str(DEFAULT_DOCUMENTS), help="文档 JSON 路径")
     parser.add_argument("--save-dir", default=os.getenv("HIPPORAG_SAVE_DIR", str(DEFAULT_OUTPUT)))
-    parser.add_argument("--model", default=os.getenv("DEEPSEEK_MODEL", "deepseek-chat"))
+    parser.add_argument("--model", default=os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"))
     parser.add_argument("--embedding-model", default=os.getenv("EMBEDDING_MODEL", "facebook/contriever"))
     parser.add_argument(
         "--device", choices=["auto", "cpu", "mps", "cuda"], default=os.getenv("EMBEDDING_DEVICE", "auto")

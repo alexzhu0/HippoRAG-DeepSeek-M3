@@ -93,7 +93,10 @@ def test_deepseek_key_is_used_and_other_key_restored(monkeypatch, tiny_model, tm
     def factory(**kwargs):
         captured.update(kwargs)
         captured["key"] = os.environ.get("OPENAI_API_KEY")
-        return SimpleNamespace(close=lambda: None)
+        return SimpleNamespace(
+            close=lambda: None,
+            llm_model=SimpleNamespace(llm_config=SimpleNamespace(generate_params={})),
+        )
 
     monkeypatch.setattr(hipporag, "HippoRAG", factory)
     monkeypatch.setenv("DEEPSEEK_API_KEY", "test-deepseek")
@@ -156,6 +159,8 @@ def test_real_hipporag_persists_and_reopens_index(monkeypatch, tiny_model, tmp_p
 
     def completion(self, **kwargs):
         calls.append(kwargs)
+        assert kwargs["model"] == "deepseek-v4-flash"
+        assert kwargs.get("extra_body") == {"thinking": {"type": "disabled"}}
         message = kwargs["messages"][-1]["content"]
         if "fact_before_filter" in message:
             content = '[[ ## fact_after_filter ## ]]\n{"fact": [["hello", "knows", "world"]]}'
@@ -170,7 +175,7 @@ def test_real_hipporag_persists_and_reopens_index(monkeypatch, tiny_model, tmp_p
                 "id": "offline-test",
                 "object": "chat.completion",
                 "created": 1,
-                "model": "deepseek-chat",
+                "model": "deepseek-v4-flash",
                 "choices": [
                     {
                         "index": 0,
