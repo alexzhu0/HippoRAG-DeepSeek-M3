@@ -125,7 +125,7 @@ bash -n setup_env.sh
 
 ## 后续需求
 
-- [OrcaRouter 可选 Provider 接入](docs/requirements/orcarouter-provider.md)：已完成可选接入、离线验证及一次真实 API 冒烟测试，合作归因待确认。
+- [OrcaRouter 可选 Provider 接入](docs/requirements/orcarouter-provider.md)：已完成可选接入、离线验证及一次真实 API 冒烟测试，合作申请已获批，已提供专属推荐入口。
 
 ## 参考
 
@@ -138,6 +138,8 @@ bash -n setup_env.sh
 ## OrcaRouter 可选网关
 
 已实现接入并通过离线及真实 API 冒烟测试。DeepSeek 直连仍为默认选项。
+
+可通过[项目专属 OrcaRouter 推荐链接](https://www.orcarouter.ai/ref/ref_9a11110d9441c8efe795)访问平台。此链接为合作推荐链接：符合平台归因与结算规则的消费可能为项目 maintainer 带来分成，批准通知中的默认比例为 5%。是否使用推荐链接及 OrcaRouter 均由用户自主选择。
 
 在项目 `.env` 中设置：
 
@@ -171,7 +173,7 @@ OrcaRouter 默认索引位于 `outputs/v2/orcarouter`，DeepSeek 沿用 `outputs
 
 认证失败请检查 `ORCAROUTER_API_KEY`；模型不存在请核对模型 ID 和基础地址。403 需检查权限或额度。429 带 `Retry-After` 且等待不超过 30 秒时最多重试一次；等待更长时退出并提示稍后重试，无该字段时应缩短输入并检查额度。连接失败及 500/502/503/504 最多尝试三次，单次请求超时为 300 秒。失败不会触发付费回退。无有效文本或缺少 usage 的响应不会作为成功答案缓存。
 
-技术接入不代表项目已加入 OSS 分成计划，目前未设置合作归因标识。合作申请、条款及收益账户由 maintainer 单独处理。[接入需求与验收状态](docs/requirements/orcarouter-provider.md)
+项目 maintainer 的 OrcaRouter Partner 申请已获批，平台已提供上述推荐链接。目前未收到需要附加到 API 请求中的归因字段说明，因此接入代码不添加未经确认的推荐请求头。推荐链接的具体归因条件和结算规则以平台条款及后台记录为准。[接入需求与验收状态](docs/requirements/orcarouter-provider.md)
 
 ### 真实 API 验证记录
 
