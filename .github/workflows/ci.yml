@@ -46,7 +46,9 @@ jobs:
           python -m ruff check .
           python -m ruff format --check .
       - name: Offline regression and integration tests
-        run: python -m pytest -q
+        # Hosted macOS VMs advertise MPS but cannot reliably execute Metal kernels.
+        # Run hardware tests separately on a physical/self-hosted Mac.
+        run: python -m pytest -q -m "not mps"
       - name: Environment diagnostics
         run: python test_env.py --offline
       - name: Shell syntax

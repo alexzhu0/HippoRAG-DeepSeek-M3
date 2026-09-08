@@ -119,7 +119,7 @@ python test_env.py --offline
 bash -n setup_env.sh
 ```
 
-测试在本地生成小型 Transformer 模型，实际执行编码、图谱和向量索引、结果解析、持久化与重新加载。外部 LLM 响应在 API 边界替换为固定测试响应，测试不下载模型、不需要真实密钥，也不评价 DeepSeek 生成质量。CI 在 Linux Python 3.10/3.12 和 macOS Python 3.11 上执行上述检查。
+测试在本地生成小型 Transformer 模型，实际执行编码、图谱和向量索引、结果解析、持久化与重新加载。外部 LLM 响应在 API 边界替换为固定测试响应，测试不下载模型、不需要真实密钥，也不评价 DeepSeek 生成质量。CI 在 Linux Python 3.10/3.12 和 macOS Python 3.11 上执行 CPU 检查（`pytest -m "not mps"`）。GitHub 托管 macOS 的 [MPS 限制](https://github.com/actions/runner-images/issues/11899)可能导致原生算子崩溃，因此 MPS 硬件测试标记为 `mps`；在实体或自托管 Mac 上运行 `python -m pytest -m mps -q`。默认本地 `pytest` 仍包含 MPS 测试，设备不可用时跳过。
 
 ## 参考
 

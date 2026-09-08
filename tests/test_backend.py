@@ -57,7 +57,7 @@ def tiny_model(tmp_path):
     return model_dir
 
 
-@pytest.mark.parametrize("device", ["cpu", "mps"])
+@pytest.mark.parametrize("device", ["cpu", pytest.param("mps", marks=pytest.mark.mps)])
 def test_embeddings_use_real_batches_and_handle_empty_input(tiny_model, device):
     import torch
 

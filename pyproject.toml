@@ -1,6 +1,7 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = ["mps: requires a physical or self-hosted Mac with a working Metal GPU"]
 
 [tool.ruff]
 target-version = "py310"
