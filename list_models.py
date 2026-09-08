@@ -1,31 +1,14 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-列出HippoRAG支持的嵌入模型
-"""
-import multiprocessing
-# 在Mac上使用spawn方法解决多进程问题
-multiprocessing.set_start_method('spawn', force=True)
+#!/usr/bin/env python3
+"""List this demo's supported mean-pooling encoders without importing ML packages."""
 
-from hipporag.embedding_model import _get_embedding_model_class
 
-# 尝试获取所有支持的嵌入模型类
-try:
-    embedding_models = _get_embedding_model_class()
-    print("支持的嵌入模型：")
-    for model_name, model_class in embedding_models.items():
-        print(f"- {model_name}")
-except Exception as e:
-    print(f"获取支持的嵌入模型列表失败: {e}")
+def main():
+    print("本演示支持的 Contriever 系列嵌入模型（非 HippoRAG 完整模型目录）：")
+    print("- facebook/contriever：兼容原项目的默认模型")
+    print("- facebook/mcontriever：多语言模型，可用于中文实验")
+    print("通过 --embedding-model 配置；首次运行需要下载模型。")
+    print("也可传入本地 Contriever 格式模型目录；其他架构需要适配器。")
 
-# 尝试导入hipporag.HippoRAG以便检查默认模型
-try:
-    from hipporag import HippoRAG
-    from inspect import signature, Parameter
-    
-    sig = signature(HippoRAG.__init__)
-    for param_name, param in sig.parameters.items():
-        if param_name == 'embedding_model_name' and param.default is not Parameter.empty:
-            print(f"\n默认嵌入模型: {param.default}")
-except Exception as e:
-    print(f"获取默认嵌入模型信息失败: {e}")
+
+if __name__ == "__main__":
+    main()

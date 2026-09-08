@@ -1,144 +1,60 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-环境测试脚本 - 检查安装情况和依赖项
-"""
-import os
-import sys
+#!/usr/bin/env python3
+"""Offline diagnostics by default; no network request or model download is made."""
+
+import argparse
+import importlib
 import platform
-import logging
+import sys
+from importlib.metadata import version
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+from demo_core import DEFAULT_DOCUMENTS, ROOT, load_documents
 
-def print_separator(title):
-    """打印分隔符"""
-    print("\n" + "=" * 50)
-    print(f" {title} ".center(50, "="))
-    print("=" * 50)
 
-def check_python():
-    """检查Python版本"""
-    print_separator("Python环境")
-    
-    print(f"Python版本: {platform.python_version()}")
-    print(f"Python路径: {sys.executable}")
-    print(f"平台信息: {platform.platform()}")
-    
-    if "arm64" in platform.platform().lower() and "darwin" in platform.platform().lower():
-        print("✅ 检测到Apple Silicon架构 (M系列芯片)")
-    else:
-        print("⚠️ 未检测到Apple Silicon架构")
-
-def check_torch():
-    """检查PyTorch安装"""
-    print_separator("PyTorch")
-    
-    try:
-        import torch
-        print(f"PyTorch版本: {torch.__version__}")
-        
-        # 检查MPS
-        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            print("✅ MPS可用 (Apple Metal性能着色器)")
-        else:
-            print("⚠️ MPS不可用")
-            
-        # 检查设备
-        print(f"可用设备: CPU", end="")
-        if torch.cuda.is_available():
-            print(", CUDA", end="")
-        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            print(", MPS", end="")
-        print()
-        
-    except ImportError:
-        print("❌ PyTorch未安装")
-
-def check_hipporag():
-    """检查HippoRAG安装"""
-    print_separator("HippoRAG")
-    
-    try:
-        import hipporag
-        print(f"HippoRAG已安装")
-    except ImportError:
-        print("❌ HippoRAG未安装")
-        return
-    
-    # 检查必要依赖
-    deps = ["transformers", "networkx", "sklearn", "pandas"]
-    for dep in deps:
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="检查依赖、文档与配置，不调用 API")
+    parser.add_argument("--offline", action="store_true", help="不要求配置 API 密钥，适合安装检查和 CI")
+    args = parser.parse_args(argv)
+    errors = []
+    print(f"Python {platform.python_version()} / {platform.platform()}")
+    if not (3, 10) <= sys.version_info < (3, 13):
+        errors.append("需要 Python 3.10–3.12")
+    for module, distribution in [
+        ("torch", "torch"),
+        ("hipporag", "hipporag"),
+        ("dotenv", "python-dotenv"),
+        ("psutil", "psutil"),
+    ]:
         try:
-            if dep == "sklearn":
-                import sklearn
-            else:
-                __import__(dep)
-            print(f"✅ {dep} 已安装")
-        except ImportError:
-            print(f"❌ {dep} 未安装")
+            importlib.import_module(module)
+            print(f"✓ {distribution} {version(distribution)}")
+        except Exception as error:
+            errors.append(f"{distribution} 导入失败：{error}")
+    try:
+        from backend import select_device
 
-def check_env_file():
-    """检查环境变量文件"""
-    print_separator("环境配置")
-    
-    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
-    
-    if os.path.exists(env_path):
-        print(f"✅ .env文件存在: {env_path}")
-        
-        # 检查API密钥
+        print(f"✓ 可用嵌入设备：{select_device('auto')}")
+        print(f"✓ 示例文档：{len(load_documents(DEFAULT_DOCUMENTS))} 篇")
+    except Exception as error:
+        errors.append(str(error))
+    if not args.offline:
         try:
             from dotenv import load_dotenv
-            load_dotenv(env_path)
-            
-            if os.getenv("DEEPSEEK_API_KEY"):
-                print("✅ DEEPSEEK_API_KEY已设置")
-            else:
-                print("❌ DEEPSEEK_API_KEY未设置")
-                
-            if os.getenv("DEEPSEEK_API_URL"):
-                print(f"✅ DEEPSEEK_API_URL已设置: {os.getenv('DEEPSEEK_API_URL')}")
-            else:
-                print("⚠️ DEEPSEEK_API_URL未设置，将使用默认值")
-                
-        except ImportError:
-            print("❌ python-dotenv未安装，无法验证API密钥")
-    else:
-        print(f"❌ .env文件不存在: {env_path}")
 
-def check_data():
-    """检查数据文件"""
-    print_separator("数据文件")
-    
-    data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "documents.json")
-    
-    if os.path.exists(data_path):
-        print(f"✅ 示例数据文件存在: {data_path}")
-        
-        try:
-            import json
-            with open(data_path, "r", encoding="utf-8") as f:
-                docs = json.load(f)
-            print(f"✅ 成功加载{len(docs)}篇文档")
-        except Exception as e:
-            print(f"❌ 数据文件加载失败: {e}")
-    else:
-        print(f"❌ 示例数据文件不存在: {data_path}")
+            from backend import validate_key
 
-def main():
-    """主函数"""
-    print_separator("HippoRAG环境测试")
-    
-    check_python()
-    check_torch()
-    check_hipporag()
-    check_env_file()
-    check_data()
-    
-    print_separator("测试完成")
-    print("如果发现问题，请查看README.md获取解决方案")
-    print("或者重新运行 ./setup_env.sh 脚本安装依赖")
+            load_dotenv(ROOT / ".env", override=False)
+            validate_key()
+            print("✓ DEEPSEEK_API_KEY 已配置（未验证 API 有效性）")
+        except Exception as error:
+            errors.append(str(error))
+    for error in errors:
+        print(f"✗ {error}")
+    if errors:
+        print("检查未通过；请参考 README 或重新运行 setup_env.sh")
+        return 1
+    print("离线检查通过；未下载嵌入模型，也未调用 DeepSeek API。")
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

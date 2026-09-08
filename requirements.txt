@@ -1,0 +1,9 @@
+# PyPI 2.0.0a4 requires Linux-only vLLM. This reviewed upstream snapshot
+# (2.0.0a5) makes vLLM optional and supplies index identity validation.
+hipporag @ git+https://github.com/OSU-NLP-Group/HippoRAG.git@1438aba3fc44ff10573e5a5e1e7cc3c7f9794aff
+python-dotenv>=1.2,<2
+psutil>=6,<8
+# Bounds for upstream's otherwise unbounded numerical dependencies.
+numpy>=1.26,<3
+pandas>=2.2,<4
+scipy>=1.14,<2

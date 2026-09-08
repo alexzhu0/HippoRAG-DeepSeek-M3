@@ -1,43 +1,23 @@
-#!/bin/bash
-# HippoRAG环境设置脚本 - M3芯片优化版 + DeepSeek
-
-# 创建conda环境
-echo "创建conda环境: hipporag..."
-conda create -n hipporag python=3.10 -y
-
-# 激活环境
-echo "激活环境..."
-eval "$(conda shell.bash hook)"
-conda activate hipporag
-
-# 安装基础依赖
-echo "安装基础依赖..."
-pip install python-dotenv pandas psutil requests
-
-# 安装PyTorch (Apple Silicon优化版 - 稳定版)
-echo "安装PyTorch (M3芯片优化版)..."
-pip install --upgrade pip
-pip install torch torchvision torchaudio
-
-# 检查torch是否安装成功
-echo "验证PyTorch安装..."
-python -c "import torch; print(f'PyTorch已安装: {torch.__version__}, MPS可用: {torch.backends.mps.is_available()}')"
-
-# 安装Transformers
-echo "安装Transformers..."
-pip install transformers sentence-transformers
-
-# 安装HippoRAG依赖
-echo "安装HippoRAG依赖..."
-pip install networkx scikit-learn pyyaml fsspec
-
-# 使用pip直接安装HippoRAG
-echo "安装HippoRAG..."
-pip install hipporag --no-deps
-
-echo "===================================="
-echo "环境设置完成！使用说明："
-echo "1. 在.env文件中设置您的DeepSeek API密钥"
-echo "2. 运行应用：python app.py"
-echo "3. 高级版应用：python advanced_app.py"
-echo "===================================="
+#!/usr/bin/env bash
+# Reusable project-local installation, without altering system Python or Conda.
+set -euo pipefail
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+python_bin="${PYTHON_BIN:-python3}"
+"$python_bin" -c 'import sys; sys.exit(0 if (3, 10) <= sys.version_info < (3, 13) else "需要 Python 3.10–3.12，建议 3.11；可设置 PYTHON_BIN=python3.11")'
+command -v git >/dev/null || { echo "需要先安装 Git" >&2; exit 1; }
+if [[ ! -x "$project_dir/.venv/bin/python" ]]; then
+    "$python_bin" -m venv "$project_dir/.venv"
+fi
+venv_python="$project_dir/.venv/bin/python"
+"$venv_python" -c 'import sys; sys.exit(0 if (3, 10) <= sys.version_info < (3, 13) else "现有 .venv 的 Python 版本不受支持，请改名保存后重新运行安装")'
+"$venv_python" -m pip install --upgrade pip
+"$venv_python" -m pip install -r "$project_dir/requirements.txt"
+"$venv_python" -m pip check
+if [[ ! -f "$project_dir/.env" ]]; then
+    cp "$project_dir/.env.template" "$project_dir/.env"
+    chmod 600 "$project_dir/.env"
+fi
+"$venv_python" "$project_dir/test_env.py" --offline
+printf '\n安装完成。请填写项目 .env 中的 DEEPSEEK_API_KEY，然后运行：\n'
+printf 'source "%s/.venv/bin/activate"\n' "$project_dir"
+printf 'python "%s/advanced_app.py"\n' "$project_dir"

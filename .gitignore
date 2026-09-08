@@ -32,3 +32,14 @@ Thumbs.db
 
 # 输出和缓存目录（可选，如果这些文件很大）
 # outputs/
+
+# Local environments, generated indexes and QA exports
+.venv/
+.env.*
+!.env.template
+outputs/
+qa_history*.csv
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
